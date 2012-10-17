@@ -4,15 +4,21 @@ module Hashie
   # A Hashie Hash is simply a Hash that has convenience
   # functions baked in such as stringify_keys that may
   # not be available in all libraries.
-  class Hash < Hash
+  class Hash < ::Hash
     include Hashie::HashExtensions
 
-    # Converts a mash back to a hash.
-    def to_hash(options = {})
+    # Converts a mash back to a hash (with stringified keys)
+    def to_hash
       out = {}
       keys.each do |k|
-        key = options[:symbolize_keys] ? k.to_sym : k.to_s
-        out[key] = Hashie::Hash === self[k] ? self[k].to_hash : self[k]
+        if self[k].is_a?(Array)
+          out[k] ||= []
+          self[k].each do |array_object|
+            out[k] << (Hashie::Hash === array_object ? array_object.to_hash : array_object)
+          end
+        else
+          out[k] = Hashie::Hash === self[k] ? self[k].to_hash : self[k]
+        end
       end
       out
     end
